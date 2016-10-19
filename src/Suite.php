@@ -353,6 +353,9 @@ class Suite extends Scope
     protected function _suiteEnd()
     {
         $this->runCallbacks('afterAll', false);
+
+        $this->summary()->log($this->log());
+
         if ($this->message()) {
             $this->report('suiteEnd', $this);
         }
@@ -510,7 +513,6 @@ class Suite extends Scope
                 $this->_stats = $this->_stats();
             } catch (Throwable $exception) {
                 $this->_exception($exception);
-                $this->summary()->log($this->log());
 
                 $this->_stats = [
                     'normal' => 0,

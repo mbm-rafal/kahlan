@@ -137,6 +137,29 @@ describe("Suite", function () {
 
         });
 
+        it("reports errors occuring in describes", function () {
+
+            skipIf(defined('HHVM_VERSION') || PHP_MAJOR_VERSION < 7);
+
+            $describe = $this->root->describe("", function () {
+                $undefined++;
+            });
+
+            $this->suite->run();
+
+            $results = $this->suite->summary()->logs('errored');
+            expect($results)->toHaveLength(1);
+
+            $report = reset($results);
+
+            expect($report->exception()->getMessage())->toBe('`E_NOTICE` Undefined variable: undefined');
+            expect($report->type())->toBe('errored');
+            expect($report->messages())->toBe(['', '']);
+
+            expect($this->suite->status())->toBe(-1);
+
+        });
+
     });
 
     describe("->describe()", function () {
@@ -200,6 +223,36 @@ describe("Suite", function () {
 
         });
 
+        it("captures errors", function () {
+
+            $describe = $this->root->describe("", function () {
+
+                $this->beforeAll(function () {
+                    $undefined++;
+                });
+
+                $this->it("it", function () {
+                    $this->expect(true)->toBe(true);
+                });
+
+            });
+
+            $this->suite->run(['reporters' => $this->reporters]);
+            $logs = $this->suite->summary()->logs('errored');
+
+            expect($logs)->toHaveLength(1);
+            $log = reset($logs);
+
+            expect($log->exception()->getMessage())->toBe("`E_NOTICE` Undefined variable: undefined");
+
+            expect($this->root->focused())->toBe(false);
+
+            expect($this->suite->total())->toBe(1);
+            expect($this->suite->active())->toBe(1);
+            expect($this->suite->status())->toBe(-1);
+
+        });
+
     });
 
     describe("->afterAll()", function () {
@@ -212,6 +265,36 @@ describe("Suite", function () {
             $this->root->afterAll(function () {});
             $callbacks = $this->root->callbacks('afterAll');
             expect($callbacks)->toHaveLength(1);
+
+        });
+
+        it("captures errors", function () {
+
+            $describe = $this->root->describe("", function () {
+
+                $this->afterAll(function () {
+                    $undefined++;
+                });
+
+                $this->it("it", function () {
+                    $this->expect(true)->toBe(true);
+                });
+
+            });
+
+            $this->suite->run(['reporters' => $this->reporters]);
+            $logs = $this->suite->summary()->logs('errored');
+
+            expect($logs)->toHaveLength(1);
+            $log = reset($logs);
+
+            expect($log->exception()->getMessage())->toBe("`E_NOTICE` Undefined variable: undefined");
+
+            expect($this->root->focused())->toBe(false);
+
+            expect($this->suite->total())->toBe(1);
+            expect($this->suite->active())->toBe(1);
+            expect($this->suite->status())->toBe(-1);
 
         });
 

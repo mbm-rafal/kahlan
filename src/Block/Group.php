@@ -181,12 +181,19 @@ class Group extends \Kahlan\Block
     /**
      * Suite end helper.
      */
-    protected function _blockEnd()
+    protected function _blockEnd($runAfterAll = true)
     {
-        $this->runCallbacks('afterAll', false);
+        if ($runAfterAll) {
+            try {
+                $this->runCallbacks('afterAll', false);
+            } catch (Exception $exception) {
+                $this->_exception($exception, true);
+            }
+        }
 
         $type = $this->log()->type();
         if ($type === 'failed' || $type === 'errored') {
+            $this->_passed = false;
             $this->suite()->failure();
         }
 
